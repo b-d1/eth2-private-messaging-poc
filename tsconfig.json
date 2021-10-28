@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "es6",
+      "sourceMap": false,
+      "inlineSourceMap": true,
+      "composite": true,
+      "declaration": true,
+      "declarationMap": true,
+      "moduleResolution": "node",
+      "strict": true,
+      "pretty": true,
+      "outDir": "dist/",
+      "rootDir": ".",
+      "declarationDir": "dist/",
+      "noImplicitAny": false,
+      "esModuleInterop": true,
+      "lib": [
+        "es6",
+        "dom"
+      ],
+      "typeRoots": [
+        "./node_modules/@types"
+      ]
+    },
+    "include": ["./src/**/*.ts", "./test/**/*.ts"],
+    "exclude": ["node_modules", "dist"]
+  }

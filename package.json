@@ -1,13 +1,20 @@
 {
-  "name": "eth2-validator-private-messaging",
+  "name": "eth2-validator-private-messaging-client",
   "version": "1.0.0",
-  "description": "ETH2 Validator private messaging",
+  "description": "ETH2 Validator private messaging client",
   "main": "dist/src/index.js",
   "author": "Blagoj Dimovski",
   "license": "MIT",
   "dependencies": {
     "js-waku": "^0.14.1",
-    "protons": "^2.0.3"
+    "protons": "^2.0.3",
+    "ethers": "5.5.1",
+    "@chainsafe/bls": "^6.0.3",
+    "mongoose": "^6.0.8",
+    "@libsem/identity": "^1.0.17",
+    "@libsem/protocols": "^1.0.21",
+    "dotenv": "^10.0.0",
+    "circomlib": "^2.0.2"
   },
   "devDependencies": {
     "@types/node": "^16.9.4",

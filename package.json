@@ -7,14 +7,14 @@
   "license": "MIT",
   "dependencies": {
     "js-waku": "^0.14.1",
-    "protons": "^2.0.3",
     "ethers": "5.5.1",
     "@chainsafe/bls": "^6.0.3",
     "mongoose": "^6.0.8",
     "@libsem/identity": "^1.0.17",
     "@libsem/protocols": "^1.0.21",
     "dotenv": "^10.0.0",
-    "circomlib": "^2.0.2"
+    "circomlib": "^2.0.2",
+    "protobufjs": "^6.11.2"
   },
   "devDependencies": {
     "@types/node": "^16.9.4",
@@ -27,7 +27,7 @@
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node .",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node dist/test/client.js",
     "prettier": "prettier --write \"**/*.{js,json,md,sol,ts}\""
   }
 }

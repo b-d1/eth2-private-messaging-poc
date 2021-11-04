@@ -2,23 +2,15 @@ import REGISTRY_CONTRACT_ABI from "../abis/RegistryContract.json";
 import config from "../config";
 import { RegistryContract } from "../utils/contractTypes/RegistryContract";
 import ethers from "ethers";
-import MerkleTree from "./MerkleTree";
+import {appendLeaf} from "./merkleTree";
 import {isSignatureValid} from "../utils/bls"
 
-class RegistrationEventListener {
-
-  membershipTree: MerkleTree;
-
-  constructor(
-    membershipTree: MerkleTree,
-  ) {
-    this.membershipTree = membershipTree;
-  }
 
 
-  public listenForMembershipEvents = async () => {
-    const registryContract = this.getRegistryContract();
-  
+
+  export const listenForMembershipEvents = async () => {
+    const registryContract = getRegistryContract();
+
     registryContract.on(
       "RegistrationEvent",
       async (pubkey: Uint8Array, idCommitment: Uint8Array, signature: Uint8Array) => {
@@ -36,30 +28,29 @@ class RegistrationEventListener {
           // TODO: Check if the pubkey belongs to a valid ETH2 validator
 
           try {
-            await this.membershipTree.appendLeaf(idCommitmentHex)
+            await appendLeaf(idCommitmentHex)
           } catch(e) {
             console.log("Membership registration unsuccessfull: ", e)
           }
-          
+
         }
 
       }
     );
   };
 
-  private getRegistryContract = (): RegistryContract => {
+  const getRegistryContract = (): RegistryContract => {
     const provider = new ethers.providers.JsonRpcProvider(config.ETH_RPC_URL);
-    const registryContract: RegistryContract = <RegistryContract>(
+    const registryContract: RegistryContract = (
       new ethers.Contract(
         config.REGISTRY_SMART_CONTRACT_ADDRESS,
         REGISTRY_CONTRACT_ABI,
         provider
       )
-    );
+    ) as RegistryContract;
     return registryContract;
   };
-  
-}
 
-export default RegistrationEventListener;
+
+
 

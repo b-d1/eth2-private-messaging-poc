@@ -1,5 +1,9 @@
 import { getBootstrapNodes, Waku, WakuMessage } from "js-waku";
-import {messageTypes, appContentTopic} from "../utils/messaging"
+import config from "../config";
+import { Type } from "protobufjs";
+import {getMessageTypes, MessageTypes} from "./utils"
+import {WakuMessage as WakuMessageType, RateLimitProof, WakuMessageStatus, RLNcredentials, Witness} from "../utils/types"
+import {generateProof, retreiveCredentials, verifyProof} from "../rln"
 // const getBootstrapNodes = (): string[] => {
 
 //     return [
@@ -12,31 +16,69 @@ import {messageTypes, appContentTopic} from "../utils/messaging"
 class Messenger {
 
     wakuNode: Waku | undefined;
-    rln: RLN;
-    constructor (rln: RLN) {
-        this.rln = rln;
-    }
+    messageTypes: MessageTypes | undefined;
 
-    public async setup(): Promise<boolean> {
+    public  setup = async (): Promise<boolean> => {
         this.wakuNode = await Waku.create({
             bootstrap: true
           });
 
         const nodes = await getBootstrapNodes();
-        await Promise.all(nodes.map((addr) => (<Waku>this.wakuNode).dial(addr)));
+        await Promise.all(nodes.map((addr) => (this.wakuNode as Waku).dial(addr)));
         await this.wakuNode.waitForConnectedPeer();
 
-        this.wakuNode.relay.addObserver(this.processIncomingMessages, [appContentTopic]);
+        this.wakuNode.relay.addObserver(this.processIncomingMessages, [config.APP_CONTENT_TOPIC]);
 
+        this.messageTypes = await getMessageTypes();
 
         return true;
     }
-    
-    
-    public async processIncomingMessages(wakuMessage: WakuMessage) {
+
+
+    private processIncomingMessages = async (wakuMessage: WakuMessage) =>  {
+
+        if (!wakuMessage.payload || !this.messageTypes) return;
+
+        // TODO: Check if further decoding is needed
+        const message = this.messageTypes.WakuMessage.decode(wakuMessage.payload);
+
+        console.log("Waku message received")
+        console.log(message)
+
+        // TODO: Message proof verification
 
 
     }
-    
+
+    public sendMessage = async (content: string, witness: Witness) => {
+        if(!this.messageTypes || !this.wakuNode) {
+            throw new Error("Improper initialization");
+        }
+
+        const message: WakuMessageType = {
+            payload: Buffer.from(content, "utf-8"),
+            contentTopic: config.APP_CONTENT_TOPIC,
+            version: 1,
+            timestamp:  Date.now()
+        }
+        const proof: RateLimitProof = await generateProof(message, witness);
+        message.rateLimitProof = proof;
+
+        const msgVerificationErr = (this.messageTypes as MessageTypes).WakuMessage.verify(message);
+        if(msgVerificationErr) {
+            throw new Error(msgVerificationErr);
+        }
+
+        const protoMessage = this.messageTypes.WakuMessage.create(message);
+        const payload = this.messageTypes.WakuMessage.encode(protoMessage).finish();
+
+        const wakuMessage = await WakuMessage.fromBytes(payload, config.APP_CONTENT_TOPIC);
+
+        await this.wakuNode.relay.send(wakuMessage);
+
+    }
+
 
 }
+
+export default Messenger

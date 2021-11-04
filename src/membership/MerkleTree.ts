@@ -6,20 +6,19 @@ import {
 import { IMerkleTreeNodeDocument } from "../db/models/MerkleTree/MerkleTree.types";
 import poseidonHash from "../utils/hasher";
 
-class MerkleTree {
-  public syncTree = async (idCommitments: string[]): Promise<boolean> => {
-    return await this.addLeaves(idCommitments);
+  export const syncTree = async (idCommitments: string[]): Promise<boolean> => {
+    return await addLeaves(idCommitments);
   };
 
-  private addLeaves = async (ids: string[]) => {
+  export const addLeaves = async (ids: string[]) => {
     for (const id of ids) {
-      await this.appendLeaf(id, true);
+      await appendLeaf(id, true);
     }
 
     return true;
   };
 
-  public appendLeaf = async (
+  export const appendLeaf = async (
     idCommitment: string,
     isUpdate: boolean = false
   ): Promise<string> => {
@@ -115,7 +114,7 @@ class MerkleTree {
     return node.hash;
   };
 
-  public updateLeaf = async (
+  export const updateLeaf = async (
     leafHash: string,
     newValue: string = config.ZERO_VALUE.toString()
   ) => {
@@ -149,7 +148,7 @@ class MerkleTree {
     }
   };
 
-  public retrievePath = async (idCommitment: string): Promise<any> => {
+  export const getWitness = async (idCommitment: string): Promise<any> => {
     // Get path starting from leaf node.
     const leafNode = await MerkleTreeNode.findLeafByHash(idCommitment);
 
@@ -221,6 +220,4 @@ class MerkleTree {
       });
     });
   };
-}
 
-export default MerkleTree;

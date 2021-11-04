@@ -1,7 +1,10 @@
-import MerkleTree from "./MerkleTree"
-import RegistrationEventListener from "./RegistrationEventListener"
+import {appendLeaf, updateLeaf, syncTree, getWitness} from "./merkleTree"
+import {listenForMembershipEvents} from "./registrationEvents"
 
 export {
-    MerkleTree,
-    RegistrationEventListener
+    appendLeaf,
+    updateLeaf,
+    syncTree,
+    getWitness,
+    listenForMembershipEvents
 }

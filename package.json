@@ -8,12 +8,18 @@
   "dependencies": {
     "js-waku": "^0.14.1",
     "ethers": "5.5.1",
+    "@ethersproject/abi": "^5.4.0",
+    "@ethersproject/abstract-signer": "^5.4.1",
+    "@ethersproject/bignumber": "^5.4.1",
+    "@ethersproject/bytes": "^5.4.0",
+    "@ethersproject/contracts": "^5.4.1",
+    "@ethersproject/providers": "^5.4.4",
     "@chainsafe/bls": "^6.0.3",
     "mongoose": "^6.0.8",
     "@libsem/identity": "^1.0.17",
     "@libsem/protocols": "^1.0.21",
     "dotenv": "^10.0.0",
-    "circomlib": "^2.0.2",
+    "circomlib": "^0.5.5",
     "protobufjs": "^6.11.2"
   },
   "devDependencies": {
@@ -27,6 +33,7 @@
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node .",
+    "pretest": "npm run build",
     "test": "node dist/test/client.js",
     "prettier": "prettier --write \"**/*.{js,json,md,sol,ts}\""
   }

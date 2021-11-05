@@ -1,10 +1,11 @@
 import {appendLeaf, updateLeaf, syncTree, getWitness} from "./merkleTree"
-import {listenForMembershipEvents} from "./registrationEvents"
+import {listenForMembershipEvents, register as registerToSmartContract } from "./smartContractRegistry"
 
 export {
     appendLeaf,
     updateLeaf,
     syncTree,
     getWitness,
-    listenForMembershipEvents
+    listenForMembershipEvents,
+    registerToSmartContract
 }

@@ -116,8 +116,8 @@ export class IRegistryContract extends BaseContract {
 
   filters: {
     "RegistrationEvent(bytes,bytes,bytes)"(
-      pubkey?: BytesLike | null,
-      idCommitment?: BytesLike | null,
+      pubkey?: null,
+      idCommitment?: null,
       signature?: null
     ): TypedEventFilter<
       [string, string, string],
@@ -125,8 +125,8 @@ export class IRegistryContract extends BaseContract {
     >;
 
     RegistrationEvent(
-      pubkey?: BytesLike | null,
-      idCommitment?: BytesLike | null,
+      pubkey?: null,
+      idCommitment?: null,
       signature?: null
     ): TypedEventFilter<
       [string, string, string],

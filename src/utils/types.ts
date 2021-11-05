@@ -34,5 +34,11 @@ interface Witness {
   indices: number[];
 }
 
+interface RegistrationCredentials {
+  idCommitment: Uint8Array;
+  pubKey: Uint8Array;
+  signature: Uint8Array;
+}
 
-export { WakuMessageStatus, RateLimitProof, WakuMessage, RLNcredentials, Witness };
+
+export { WakuMessageStatus, RateLimitProof, WakuMessage, RLNcredentials, Witness, RegistrationCredentials };

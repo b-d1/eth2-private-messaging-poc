@@ -1,7 +1,7 @@
 import { getBootstrapNodes, Waku, WakuMessage } from "js-waku";
 import config from "../config";
 import { Type } from "protobufjs";
-import {getMessageTypes, MessageTypes} from "./utils"
+import {getMessageTypes, MessageTypes, isSpam, registerValidMessage, isDuplicate} from "./utils"
 import {WakuMessage as WakuMessageType, RateLimitProof, WakuMessageStatus, RLNcredentials, Witness} from "../utils/types"
 import {generateProof, retreiveCredentials, verifyProof} from "../rln"
 // const getBootstrapNodes = (): string[] => {
@@ -36,16 +36,37 @@ class Messenger {
 
 
     private processIncomingMessages = async (wakuMessage: WakuMessage) =>  {
-
         if (!wakuMessage.payload || !this.messageTypes) return;
 
-        // TODO: Check if further decoding is needed
-        const message = this.messageTypes.WakuMessage.decode(wakuMessage.payload);
+        const message: WakuMessageType = this.messageTypes.WakuMessage.decode(wakuMessage.payload) as any;
+        // const rlnProof: RateLimitProof = message.rateLimitProof;
 
-        console.log("Waku message received")
-        console.log(message)
+        const status = await verifyProof(message);
+        console.log("incoming message verified...", status);
 
-        // TODO: Message proof verification
+        if(status === WakuMessageStatus.VALID) {
+            
+            console.log("message", message.payload.toString())
+            const duplicate = await isDuplicate(message);
+            
+            if(!duplicate) {
+            
+                const spam = await isSpam(message);
+
+                // TODO: 
+                if(spam) {
+                    // obtain users credentials
+                    const userCredentials = await retreiveCredentials(<RateLimitProof>message.rateLimitProof)
+                    // remove the user and propagate the message
+
+                } else {
+                    await registerValidMessage(message);
+                }
+
+            }
+
+        }
+        
 
 
     }
@@ -71,10 +92,9 @@ class Messenger {
 
         const protoMessage = this.messageTypes.WakuMessage.create(message);
         const payload = this.messageTypes.WakuMessage.encode(protoMessage).finish();
-
         const wakuMessage = await WakuMessage.fromBytes(payload, config.APP_CONTENT_TOPIC);
 
-        await this.wakuNode.relay.send(wakuMessage);
+        await this.wakuNode.lightPush.push(wakuMessage);
 
     }
 

@@ -45,7 +45,6 @@ export async function isSpam(
   rlnIdentifier: string,
   epoch: string,
   nullifier: string,
-  numRequests: number
 ): Promise<boolean> {
   const requests = await this.aggregate([
     {
@@ -60,5 +59,5 @@ export async function isSpam(
     },
   ]);
 
-  return requests.length === 1 && requests[0].num_requests >= numRequests;
+  return requests.length === 1 && requests[0].num_requests >= 2;
 }

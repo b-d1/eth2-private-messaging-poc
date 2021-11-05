@@ -14,13 +14,13 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
-        indexed: true,
+        indexed: false,
         internalType: "bytes",
         name: "pubkey",
         type: "bytes",
       },
       {
-        indexed: true,
+        indexed: false,
         internalType: "bytes",
         name: "idCommitment",
         type: "bytes",

@@ -1,15 +1,13 @@
-import config from "../config"
+import config from "../config";
 import {
   MerkleTreeZero,
   MerkleTreeNode,
 } from "../db/models/MerkleTree/MerkleTree.model";
 import poseidonHash from "./hasher";
 
-
 const seed = async () => {
   await seedZeros(config.ZERO_VALUE);
 };
-
 
 const seedZeros = async (zeroValue: BigInt) => {
   const zeroHashes = await MerkleTreeZero.findZeroes();

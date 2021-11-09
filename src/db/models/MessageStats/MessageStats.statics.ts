@@ -44,7 +44,7 @@ export async function isSpam(
   this: typeof MessageStats,
   rlnIdentifier: string,
   epoch: string,
-  nullifier: string,
+  nullifier: string
 ): Promise<boolean> {
   const requests = await this.aggregate([
     {

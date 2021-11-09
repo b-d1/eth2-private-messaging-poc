@@ -1,22 +1,24 @@
-import { init, PublicKey,  Signature, SecretKey } from "@chainsafe/bls";
+import { init, PublicKey, Signature, SecretKey } from "@chainsafe/bls";
 
 export const genBlsKeys = async () => {
-await init("herumi");
+  await init("herumi");
 
   // BLS secret and public key
   const secretKey = SecretKey.fromKeygen();
   const publicKey = secretKey.toPublicKey();
 
   return {
-      pubkey: publicKey.toHex(),
-      privkey: secretKey.toHex()
-  }
+    pubkey: publicKey.toHex(),
+    privkey: secretKey.toHex(),
+  };
+};
 
-}
-
-
-export const isSignatureValid = (signatureHex: string, pubKeyHex: string, message: Uint8Array ): boolean => {
-    const signature = Signature.fromHex(signatureHex);
-    const pubkey = PublicKey.fromHex(pubKeyHex);
-    return signature.verify(pubkey, message)
-}
+export const isSignatureValid = (
+  signatureHex: string,
+  pubKeyHex: string,
+  message: Uint8Array
+): boolean => {
+  const signature = Signature.fromHex(signatureHex);
+  const pubkey = PublicKey.fromHex(pubKeyHex);
+  return signature.verify(pubkey, message);
+};

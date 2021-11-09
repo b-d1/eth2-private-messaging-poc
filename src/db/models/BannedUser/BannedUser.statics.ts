@@ -5,3 +5,11 @@ export async function getTotalBannedUsers(
 ): Promise<number> {
   return this.countDocuments({});
 }
+
+export async function isBanned(
+  this: typeof BannedUser,
+  idCommitment: string
+): Promise<boolean> {
+  const user = await this.findOne({ idCommitment });
+  return !!user;
+}

@@ -1,4 +1,3 @@
-
 enum WakuMessageStatus {
   DUPLICATE = "duplicate", // the message is duplicate, we should not process it further
   SPAM = "spam", // the message is considered as spam, the user should be slashed
@@ -40,5 +39,11 @@ interface RegistrationCredentials {
   signature: Uint8Array;
 }
 
-
-export { WakuMessageStatus, RateLimitProof, WakuMessage, RLNcredentials, Witness, RegistrationCredentials };
+export {
+  WakuMessageStatus,
+  RateLimitProof,
+  WakuMessage,
+  RLNcredentials,
+  Witness,
+  RegistrationCredentials,
+};

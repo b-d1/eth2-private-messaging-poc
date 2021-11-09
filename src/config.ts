@@ -13,5 +13,5 @@ export default {
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY || "", // the ethereum private key, used to sign the register transaction for the RegistryContract
   ETH_RPC_URL: process.env.ETH_RPC_URL || "http://localhost:8545",
   APP_CONTENT_TOPIC: process.env.APP_CONTENT_TOPIC || "",
-  RLN_IDENTIFIER: process.env.RLN_IDENTIFIER || "" // String representation of finite field
+  RLN_IDENTIFIER: process.env.RLN_IDENTIFIER || "", // String representation of finite field
 };

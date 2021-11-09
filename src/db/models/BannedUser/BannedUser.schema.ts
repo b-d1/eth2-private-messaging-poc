@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { getTotalBannedUsers } from "./BannedUser.statics";
+import { getTotalBannedUsers, isBanned } from "./BannedUser.statics";
 import {
   IBannedUser,
   IBannedUserDocument,
@@ -8,7 +8,6 @@ import {
 
 const BannedUserSchemaFields: Record<keyof IBannedUser, any> = {
   idCommitment: { type: String, required: true, unique: true },
-  leafIndex: { type: Number, required: true, unique: false },
   secret: { type: String, required: true, unique: true },
 };
 
@@ -17,5 +16,6 @@ const UserSchema = new Schema<IBannedUserDocument, IBannedUserModel>(
 );
 
 UserSchema.statics.getTotalBannedUsers = getTotalBannedUsers;
+UserSchema.statics.isBanned = isBanned;
 
 export default UserSchema;

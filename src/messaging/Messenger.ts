@@ -17,7 +17,7 @@ import {
   Witness,
 } from "../utils/types";
 import { generateProof, retreiveCredentials, verifyProof } from "../rln";
-import { updateLeaf } from "../membership";
+import { updateLeaf, tryBanningUser } from "../membership";
 import BannedUser from "../db/models/BannedUser/BannedUser.model";
 // const getBootstrapNodes = (): string[] => {
 
@@ -31,8 +31,9 @@ import BannedUser from "../db/models/BannedUser/BannedUser.model";
 class Messenger {
   wakuNode: Waku | undefined;
   messageTypes: MessageTypes | undefined;
+  recipientIdCommitment: string | undefined;
 
-  public setup = async (): Promise<boolean> => {
+  public setup = async (idCommitment: string): Promise<boolean> => {
     this.wakuNode = await Waku.create({
       bootstrap: true,
     });
@@ -46,12 +47,17 @@ class Messenger {
     ]);
 
     this.messageTypes = await getMessageTypes();
-
+    this.recipientIdCommitment = idCommitment;
     return true;
   };
 
   private processIncomingMessages = async (wakuMessage: WakuMessage) => {
-    if (!wakuMessage.payload || !this.messageTypes) return;
+    if (
+      !wakuMessage.payload ||
+      !this.messageTypes ||
+      !this.recipientIdCommitment
+    )
+      return;
 
     const message: WakuMessageType = this.messageTypes.WakuMessage.decode(
       wakuMessage.payload
@@ -60,39 +66,37 @@ class Messenger {
     if (!message.rateLimitProof || !isEpochValid(message.rateLimitProof?.epoch))
       return;
 
+
     const status = await verifyProof(message.rateLimitProof);
-    console.log("incoming message verified...", status);
+    console.log("Proof verification status: ", status);
 
     if (status === WakuMessageStatus.INVALID) return;
 
-    console.log("message", message.payload.toString());
-    const duplicate = await isDuplicate(message);
-    console.log("is message duplicate:", duplicate);
+    console.log(`(${message.timestamp}) Message received: ${message.payload.toString()}`,)
+
+    const duplicate = await isDuplicate(message, this.recipientIdCommitment);
+    console.log("Is message duplicate:", duplicate);
     if (!duplicate) {
-      const spam = await isSpam(message);
-      console.log("is message spam:", spam);
+      const spam = await isSpam(message, this.recipientIdCommitment);
+      console.log("Is message spam:", spam);
       if (spam) {
-        // obtain users credentials
-        const userCredentials = await retreiveCredentials(
-          message.rateLimitProof as RateLimitProof
+        // obtain user credentials
+        const rlnCredentials = await retreiveCredentials(
+          message.rateLimitProof as RateLimitProof,
+          this.recipientIdCommitment
         );
-        console.log("user credentials", userCredentials);
-
-        const bannedUser = new BannedUser({
-          idCommitment: userCredentials.idCommitment,
-          secret: userCredentials.secret,
-        });
-        await bannedUser.save();
-
-        await updateLeaf(userCredentials.idCommitment);
-        console.log("user removed");
+        await tryBanningUser(rlnCredentials);
       } else {
-        await registerValidMessage(message);
+        await registerValidMessage(message, this.recipientIdCommitment);
       }
     }
   };
 
-  public sendMessage = async (content: string, witness: Witness, rlnSecret: string) => {
+  public sendMessage = async (
+    content: string,
+    witness: Witness,
+    rlnSecret: string
+  ) => {
     if (!this.messageTypes || !this.wakuNode) {
       throw new Error("Improper initialization");
     }
@@ -103,7 +107,11 @@ class Messenger {
       version: 1,
       timestamp: Date.now(),
     };
-    const proof: RateLimitProof = await generateProof(message, witness, rlnSecret);
+    const proof: RateLimitProof = await generateProof(
+      message,
+      witness,
+      rlnSecret
+    );
     message.rateLimitProof = proof;
 
     const msgVerificationErr = (
@@ -120,7 +128,7 @@ class Messenger {
       config.APP_CONTENT_TOPIC
     );
 
-    await this.wakuNode.lightPush.push(wakuMessage);
+    await this.wakuNode.relay.send(wakuMessage);
   };
 }
 

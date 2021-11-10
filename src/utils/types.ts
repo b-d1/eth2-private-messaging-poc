@@ -1,3 +1,8 @@
+enum InitUserType {
+  NEW = "new", // always initialize the client with a new user
+  EXISTING = "existing", // initialize with a registered user, or register a new user if the user doesn't exists
+}
+
 enum WakuMessageStatus {
   DUPLICATE = "duplicate", // the message is duplicate, we should not process it further
   SPAM = "spam", // the message is considered as spam, the user should be slashed
@@ -40,6 +45,7 @@ interface RegistrationCredentials {
 }
 
 export {
+  InitUserType,
   WakuMessageStatus,
   RateLimitProof,
   WakuMessage,

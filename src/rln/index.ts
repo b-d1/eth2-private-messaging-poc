@@ -11,14 +11,13 @@ import {
 import {
   Rln,
   genSignalHash,
-  genExternalNullifier,
   FullProof,
 } from "@libsem/protocols";
 import MessageStats from "../db/models/MessageStats/MessageStats.model";
-import User from "../db/models/User/User.model";
 import poseidonHash from "../utils/hasher";
 import { serialize, deserialize } from "v8";
 import { genEpoch } from "./utils";
+import { MerkleTreeNode } from "../db/models/MerkleTree/MerkleTree.model";
 const PROVER_KEY_PATH: string = path.join("./circuitFiles", "rln_final.zkey");
 const CIRCUIT_PATH: string = path.join("./circuitFiles", "rln.wasm");
 const VERIFIER_KEY_PATH: string = path.join(
@@ -33,21 +32,25 @@ const verifierKey: any = JSON.parse(
 export const verifyProof = async (
   rlnProof: RateLimitProof
 ): Promise<WakuMessageStatus> => {
-  console.log("verifiying proof...");
+  console.log("Verifiying proof...");
+
+  const root = await MerkleTreeNode.findRoot();
+
+  if(!root) throw new Error("Merkle tree root invalid");
+
   const fullProof: FullProof = {
     proof: deserialize(rlnProof.proof),
     publicSignals: [
       BigInt(rlnProof.shareY.toString()),
-      BigInt(rlnProof.merkleRoot.toString()),
+      BigInt(root.hash.toString()),
       BigInt(rlnProof.nullifier.toString()),
-      genSignalHash(rlnProof.shareX.toString()),
-      genEpoch(), // epoch to be handled properly
+      BigInt(rlnProof.shareX.toString()),
+      genEpoch(),
       BigInt(config.RLN_IDENTIFIER),
     ],
   };
 
   const status = await Rln.verifyProof(verifierKey, fullProof);
-  console.log("Proof verification status...", status);
   if (!status) {
     return WakuMessageStatus.INVALID;
   }
@@ -59,9 +62,6 @@ export const generateProof = async (
   witness: Witness,
   rlnSecret: string
 ): Promise<RateLimitProof> => {
-
-
-  // const epoch = genExternalNullifier(message.timestamp.toString());
   const epoch = genEpoch();
 
   const signal = `${message.payload.toString()}${message.contentTopic}`;
@@ -94,10 +94,9 @@ export const generateProof = async (
   const proofSerlialized = serialize(fullProof.proof);
 
   const proof: RateLimitProof = {
-    // TODO: encode the fullProof.proof field here
     proof: proofSerlialized,
     nullifier: Buffer.from(nullifier.toString(), "utf-8"),
-    shareX: Buffer.from(signal, "utf-8"),
+    shareX: Buffer.from(signalHash.toString(), "utf-8"),
     shareY: Buffer.from(y.toString(), "utf-8"),
     epoch: Buffer.from(epoch, "utf-8"),
     merkleRoot: Buffer.from(witness.root, "utf-8"),
@@ -107,11 +106,13 @@ export const generateProof = async (
 };
 
 export const retreiveCredentials = async (
-  proof: RateLimitProof
+  proof: RateLimitProof,
+  recipientIdCommitment: string
 ): Promise<RLNcredentials> => {
   const requestStats = await MessageStats.getSharesByEpochForUser(
     proof.epoch.toString(),
-    proof.nullifier.toString()
+    proof.nullifier.toString(),
+    recipientIdCommitment
   );
 
   const sharesX = requestStats.map((stats) => BigInt(stats.xShare));
@@ -119,12 +120,11 @@ export const retreiveCredentials = async (
 
   const secret: bigint = Rln.retrieveSecret(
     sharesX[0],
-    genSignalHash(proof.shareX.toString()),
+    BigInt(proof.shareX.toString()),
     sharesY[0],
     BigInt(proof.shareY.toString())
   );
   const idCommitment = poseidonHash([secret]).toString();
-
   return {
     secret: secret.toString(),
     idCommitment,

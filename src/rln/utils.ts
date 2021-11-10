@@ -22,10 +22,10 @@ const genRLNcredentials = (): RLNcredentials => {
 };
 
 const genEpoch = (): string => {
-  // const timestamp = getUTCtimestampByMinute();
-  // const epoch = genExternalNullifier(timestamp.toString());
-  // return epoch;
-  return genExternalNullifier("1234");
+  const timestamp = getUTCtimestampByMinute();
+  const epoch = genExternalNullifier(timestamp.toString());
+  return epoch;
+  // return genExternalNullifier("1234");
 };
 
 export { genRlnIdentifier, genRLNcredentials, genEpoch };

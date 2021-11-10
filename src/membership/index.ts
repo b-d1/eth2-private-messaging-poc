@@ -4,6 +4,8 @@ import {
   register as registerToSmartContract,
 } from "./smartContractRegistry";
 
+import { tryBanningUser } from "./bannedUsers";
+
 export {
   appendLeaf,
   updateLeaf,
@@ -11,4 +13,5 @@ export {
   getWitness,
   listenForMembershipEvents,
   registerToSmartContract,
+  tryBanningUser,
 };

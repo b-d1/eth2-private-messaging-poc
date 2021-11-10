@@ -1,14 +1,9 @@
 import protobufjs from "protobufjs";
 import { WakuMessage as WakuMessageType } from "../utils/types";
-import {
-  Rln,
-  genSignalHash,
-  genExternalNullifier,
-  FullProof,
-} from "@libsem/protocols";
 import config from "../config";
 import MessageStats from "../db/models/MessageStats/MessageStats.model";
 import { genEpoch } from "../rln/utils";
+
 export interface MessageTypes {
   RateLimitProof: protobufjs.Type;
   WakuMessage: protobufjs.Type;
@@ -38,11 +33,11 @@ export const getMessageTypes = async (): Promise<MessageTypes> => {
 };
 
 export const isDuplicate = async (
-  message: WakuMessageType
+  message: WakuMessageType,
+  recipientIdCommitment: string
 ): Promise<boolean> => {
-  const nullifier: string = (
-    message.rateLimitProof?.nullifier.toString()
-  ) as string;
+  const nullifier: string =
+    message.rateLimitProof?.nullifier.toString() as string;
   const xShare: string = message.rateLimitProof?.shareX.toString() as string;
   const yShare: string = message.rateLimitProof?.shareY.toString() as string;
 
@@ -51,26 +46,32 @@ export const isDuplicate = async (
     genEpoch(),
     nullifier,
     xShare,
-    yShare
+    yShare,
+    recipientIdCommitment
   );
 };
 
-export const isSpam = async (message: WakuMessageType): Promise<boolean> => {
-  const nullifier: string = (
-    message.rateLimitProof?.nullifier.toString()
-  ) as string;
+export const isSpam = async (
+  message: WakuMessageType,
+  recipientIdCommitment: string
+): Promise<boolean> => {
+  const nullifier: string =
+    message.rateLimitProof?.nullifier.toString() as string;
 
   return await MessageStats.isSpam(
     config.RLN_IDENTIFIER,
     genEpoch(),
-    nullifier
+    nullifier,
+    recipientIdCommitment
   );
 };
 
-export const registerValidMessage = async (message: WakuMessageType) => {
-  const nullifier: string = (
-    message.rateLimitProof?.nullifier.toString()
-  ) as string;
+export const registerValidMessage = async (
+  message: WakuMessageType,
+  recipientIdCommitment: string
+) => {
+  const nullifier: string =
+    message.rateLimitProof?.nullifier.toString() as string;
   const xShare: string = message.rateLimitProof?.shareX.toString() as string;
   const yShare: string = message.rateLimitProof?.shareY.toString() as string;
 
@@ -80,6 +81,7 @@ export const registerValidMessage = async (message: WakuMessageType) => {
     xShare,
     yShare,
     rlnIdentifier: config.RLN_IDENTIFIER,
+    recipientIdCommitment,
   });
 
   await messageStats.save();

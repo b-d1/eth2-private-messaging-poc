@@ -5,7 +5,7 @@ import { IUser } from "./db/models/User/User.types";
 import { genRLNcredentials } from "./rln/utils";
 import { getRegistrationCredentials } from "./utils/credentials";
 import config from "./config";
-import { RegistrationCredentials, Witness } from "./utils/types";
+import { RegistrationCredentials, Witness, InitUserType } from "./utils/types";
 import {
   listenForMembershipEvents,
   getWitness,
@@ -14,62 +14,65 @@ import {
 import { sleep } from "./utils/utils";
 
 import { initDb } from "./db";
-import {genBlsKeys} from "./utils/bls"
+import { genBlsKeys } from "./utils/bls";
 
 class Client {
   messenger: Messenger | undefined;
   idCommitment: string | undefined;
   rlnSecret: string | undefined;
 
-  public setup = async () => {
+  public setup = async (initType: InitUserType) => {
     // Init the BLS library
     await init("herumi");
 
     // Init db
     await initDb();
 
-    this.messenger = new Messenger();
-    await this.messenger.setup();
     listenForMembershipEvents();
+
+    this.messenger = new Messenger();
+    if (initType === InitUserType.NEW) {
+      await this.initNewUser();
+    } else {
+      await this.initUser();
+    }
+    if (!this.idCommitment) throw new Error("User not initialized correctly");
+    await this.messenger.setup(this.idCommitment);
   };
 
-  public registerNew = async () => {
+  private initNewUser = async () => {
     const rlnCredentials = genRLNcredentials();
-    console.log("idCommitment", rlnCredentials.idCommitment);
     const blsKeys = await genBlsKeys();
-    console.log("bls keys", blsKeys)
-    const regCredentials: RegistrationCredentials =
-      getRegistrationCredentials(
-        rlnCredentials.idCommitment,
-        blsKeys.privkey,
-        blsKeys.pubkey
-      );
+    const regCredentials: RegistrationCredentials = getRegistrationCredentials(
+      rlnCredentials.idCommitment,
+      blsKeys.privkey,
+      blsKeys.pubkey
+    );
 
-      const status = await registerToSmartContract(regCredentials);
-      if (!status) {
-        throw new Error("Invalid registration to the RegistryContract.");
-      }
-      const iUser: IUser = {
-        rlnIdCommitment: rlnCredentials.idCommitment,
-        rlnSecret: rlnCredentials.secret,
-        blsPrivKey: blsKeys.privkey,
-        blsPubKey: blsKeys.pubkey,
-      };
-      const user = new User(iUser);
+    const status = await registerToSmartContract(regCredentials);
+    if (!status) {
+      throw new Error("Invalid registration to the RegistryContract.");
+    }
+    const iUser: IUser = {
+      rlnIdCommitment: rlnCredentials.idCommitment,
+      rlnSecret: rlnCredentials.secret,
+      blsPrivKey: blsKeys.privkey,
+      blsPubKey: blsKeys.pubkey,
+    };
+    const user = new User(iUser);
 
-      await user.save();
-      // sleep 30 seconds to allow for merkle tree update from the smart contract
-      await sleep(30);
-      this.idCommitment = user.rlnIdCommitment;
-      this.rlnSecret = user.rlnSecret;
-  }
+    await user.save();
+    // sleep 30 seconds to allow for merkle tree update from the smart contract
+    console.log("Registration request to the smart contract, sleeping  for 30 sec...");
+    await sleep(30);
+    this.idCommitment = user.rlnIdCommitment;
+    this.rlnSecret = user.rlnSecret;
+  };
 
-  public register = async () => {
-
+  private initUser = async () => {
     let user = await User.findOne({});
     if (!user) {
       const rlnCredentials = genRLNcredentials();
-      console.log("idCommitment", rlnCredentials.idCommitment);
       const regCredentials: RegistrationCredentials =
         getRegistrationCredentials(
           rlnCredentials.idCommitment,
@@ -91,6 +94,7 @@ class Client {
       await user.save();
 
       // sleep 30 seconds to allow for merkle tree update from the smart contract
+      console.log("Registration request to the smart contract, sleeping  for 30 sec...");
       await sleep(30);
     }
     this.idCommitment = user.rlnIdCommitment;
@@ -98,12 +102,11 @@ class Client {
   };
 
   public sendMessage = async (content: string) => {
+    console.log(`Sending message, idCommitment: ${this.idCommitment}...`);
     if (!this.idCommitment || !this.rlnSecret || !this.messenger) {
       throw new Error("Client not initialized");
     }
-    console.log("id commitment", this.idCommitment);
     const witness: Witness = await getWitness(this.idCommitment);
-    console.log("witness", witness);
     await this.messenger?.sendMessage(content, witness, this.rlnSecret);
   };
 }

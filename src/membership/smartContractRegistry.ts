@@ -11,7 +11,6 @@ import BannedUser from "../db/models/BannedUser/BannedUser.model";
 export const register = async (
   regCredentials: RegistrationCredentials
 ): Promise<boolean> => {
-  // console.log("reg credentials", regCredentials);
 
   const registryContract = getRegistryContract();
 
@@ -22,13 +21,11 @@ export const register = async (
   );
 
   const receipt: ethers.ContractReceipt = await response.wait(1);
-  // console.log("user registered: ", receipt);
-  return receipt.status ? true : false;
+  return !!receipt.status;
 };
 
 export const listenForMembershipEvents = async () => {
   const registryContract = getRegistryContract();
-
   registryContract.on(
     "RegistrationEvent",
     async (pubkey: any, idCommitment: any, signature: string) => {
@@ -47,8 +44,8 @@ export const listenForMembershipEvents = async () => {
 
         try {
           await appendLeaf(idCommitmentString);
-        } catch (e) {
-          console.log("Membership registration unsuccessfull: ", e);
+        } catch (e: any) {
+          console.log("Membership registration unsuccessfull: ", e.message);
         }
       }
     }
